@@ -1,13 +1,48 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const slugify = require('slugify');
 const { Schema, model } = mongoose;
 
 
 const categorySchema = new Schema({
-    name: String,
-    description: String,
+    name: {
+        type: String,
+        unique: true,
+        required: true
+    },
+    description: {
+        type: String,
+        unique: true,
+        required: true
+    },
+
     slug: String,
-    status: String,
+    status: {
+        type: String,
+        default: 'inactive',
+        enum: {
+            values: ['active', 'inactive'],
+            message: '{VALUE} khong duoc su dung'
+        },
+    },
+
+}, {
+    timestamps: true,
+    toJSON: {
+        virtuals: true,
+        transform(doc, ret) {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.__v;
+
+            const { id, ...res } = ret
+            return { id, ...res }
+        }
+    }
 });
 
+categorySchema.pre('save', function (next) {
+    this.slug = slugify(this.name, { lower: true })
+    next()
+})
 
-module.exports = model('categories', categorySchema);
+module.exports = model('Category', categorySchema);
