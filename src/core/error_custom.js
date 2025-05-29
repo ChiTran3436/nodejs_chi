@@ -1,5 +1,5 @@
 const StatusCode = require('./statusCode')
-const ReasonCode = require('./reasonCode')
+const ReasonCode = require('./ressonCode')
 
 class ErrorCustom extends Error {
     constructor(message, status) {

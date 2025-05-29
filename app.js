@@ -6,6 +6,8 @@ var cookieParser = require('cookie-parser');
 const MyDatabase = require('./src/database/initdatabase');
 const { log } = require('console');
 var cors = require('cors');
+const { default: mongoose } = require('mongoose');
+const multer = require('multer');
 
 MyDatabase.connection()
 
@@ -14,11 +16,11 @@ var app = express();
 app.use(cors({ origin: 'http://localhost:3000' }));
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
 app.use('/api/v1', require('./src/routes/index'));
 
@@ -30,15 +32,22 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
 
+  if (err instanceof mongoose.Error.ValidationError) {
+    const e = {}
+    for (const field in err.errors) {
+      e[field] = err.errors[field].message
+    }
+    return res.status(400).json({
+      status: 400,
+      message: e
+    })
+  }
 
-  console.log(err.message);
+  const statusCode = err.status || 500
 
-  // render the error page
-  res.status(err.status || 500).send({
+  res.status(statusCode).send({
+    status: statusCode,
     message: err.message
   });
 
